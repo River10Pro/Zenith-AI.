@@ -44,7 +44,7 @@
     </div>
 
     <script>
-        const API_ENDPOINT = "chat.php"; 
+      const API_ENDPOINT = "/chat";
         let userName = localStorage.getItem("userName");
 
         // 1. Bloqueo de sesión: Pide nombre hasta que se ingrese uno válido
@@ -166,6 +166,11 @@
         }
 
         document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
             if (e.key === "Enter") sendMessage();
         });
     </script>
