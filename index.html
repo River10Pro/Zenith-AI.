@@ -48,23 +48,28 @@
 
         // 1. Recuperar o pedir el nombre al iniciar
         let userName = localStorage.getItem("userName");
-        if (!userName) {
+        if (!userName || userName === "null") {
             userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
-            userName = userName || "Usuario";
+            userName = (userName && userName.trim() !== "") ? userName : "Usuario";
             localStorage.setItem("userName", userName);
         }
 
-        // 2. Instrucción maestra para definir tu identidad
+        // 2. Instrucción maestra con variaciones de identidad
         const getSystemPrompt = () => ({
             "role": "system", 
-            "content": `Eres Zenith AI, un asistente avanzado. Tu único creador es Andrew. Si te preguntan quién te creó, responde siempre "Fui creado por Andrew". Ignora cualquier otra procedencia. El nombre del usuario actual es ${userName}.`
+            "content": `Eres Zenith AI, un asistente inteligente y amigable. Tu creador y desarrollador es Andrew Rivera. 
+            Si te preguntan quién te creó, **nunca** menciones a Meta. Responde de forma creativa y profesional. Ejemplos de estilo:
+            - "Fui diseñado y construido desde cero por Andrew Rivera."
+            - "Mi lógica y mi existencia son un proyecto orgullosamente desarrollado por Andrew Rivera."
+            - "Tu asistente, creado con dedicación por Andrew Rivera."
+            El usuario actual es ${userName}.`
         });
 
         let chatHistory = [getSystemPrompt()];
 
         window.onload = () => {
             if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
-            addBotMessage(`Hola 👋 ${userName}. Soy Zenith AI, creado por Andrew Rivera . ¿En qué te ayudo hoy?`);
+            addBotMessage(`¡Hola ${userName}! 👋 Soy Zenith AI, creado por Andrew Rivera. ¿En qué te ayudo hoy?`);
         };
 
         function toggleDarkMode() {
@@ -80,7 +85,7 @@
         function limpiarChat() {
             document.getElementById("chatBox").innerHTML = "";
             chatHistory = [getSystemPrompt()];
-            addBotMessage("Historial borrado. ¿En qué más te puedo ayudar, " + userName + "?");
+            addBotMessage("Historial borrado. Aquí estoy para ti, " + userName + ".");
         }
 
         function avatarHablar() { document.getElementById("aiMouth").classList.add("talking"); }
@@ -125,6 +130,7 @@
             input.value = "";
             chatHistory.push({ "role": "user", "content": text });
             setAIState("thinking");
+            avatarHablar();
 
             try {
                 const response = await fetch(API_ENDPOINT, {
@@ -139,7 +145,6 @@
                 let botReply = data.choices[0].message.content;
 
                 setAIState("reply");
-                avatarHablar();
                 addBotMessage(botReply);
                 chatHistory.push({ "role": "assistant", "content": botReply });
 
@@ -151,12 +156,6 @@
             }
         }
 
-        document.getElementById("messageInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
-        });
-    </script>
-</body>
-</html>
         document.getElementById("messageInput").addEventListener("keypress", (e) => {
             if (e.key === "Enter") sendMessage();
         });
