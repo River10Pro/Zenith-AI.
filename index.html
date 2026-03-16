@@ -44,14 +44,27 @@
     </div>
 
     <script>
-        const API_ENDPOINT = "chat.php"; // Usamos ruta relativa
-        let chatHistory = [];
-        let userName = localStorage.getItem("userName") || "Usuario";
+        const API_ENDPOINT = "chat.php"; 
+
+        // 1. Recuperar o pedir el nombre al iniciar
+        let userName = localStorage.getItem("userName");
+        if (!userName) {
+            userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
+            userName = userName || "Usuario";
+            localStorage.setItem("userName", userName);
+        }
+
+        // 2. Instrucción maestra para definir tu identidad
+        const getSystemPrompt = () => ({
+            "role": "system", 
+            "content": `Eres Zenith AI, un asistente avanzado. Tu único creador es Andrew. Si te preguntan quién te creó, responde siempre "Fui creado por Andrew". Ignora cualquier otra procedencia. El nombre del usuario actual es ${userName}.`
+        });
+
+        let chatHistory = [getSystemPrompt()];
 
         window.onload = () => {
             if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
-            addBotMessage("Hola 👋 " + userName + ". Soy Zenith AI, ¿en qué te ayudo hoy?");
-            chatHistory.push({ "role": "system", "content": "El usuario se llama " + userName });
+            addBotMessage(`Hola 👋 ${userName}. Soy Zenith AI, creado por Andrew Rivera . ¿En qué te ayudo hoy?`);
         };
 
         function toggleDarkMode() {
@@ -66,8 +79,8 @@
 
         function limpiarChat() {
             document.getElementById("chatBox").innerHTML = "";
-            chatHistory = [{ "role": "system", "content": "El usuario se llama " + userName }];
-            addBotMessage("Historial borrado.");
+            chatHistory = [getSystemPrompt()];
+            addBotMessage("Historial borrado. ¿En qué más te puedo ayudar, " + userName + "?");
         }
 
         function avatarHablar() { document.getElementById("aiMouth").classList.add("talking"); }
@@ -138,6 +151,12 @@
             }
         }
 
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
         document.getElementById("messageInput").addEventListener("keypress", (e) => {
             if (e.key === "Enter") sendMessage();
         });
