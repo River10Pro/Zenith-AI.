@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith AI Assistant</title>
+    <link rel="stylesheet" href="Styles.css">
+</head>
+<body>
+    <canvas id="aiBackground"></canvas>
+
+    <div class="ai-container">
+        <div class="ai-avatar-container">
+            <div class="ai-avatar" id="aiAvatar">
+                <div class="ai-face">
+                    <div class="ai-eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                    <div class="ai-mouth" id="aiMouth"></div>
+                </div>
+            </div>
+            <div class="ai-status" id="aiStatus">En espera</div>
+        </div>
+
+        <div class="ai-header">
+            Zenith AI 
+            <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; color:white;">🌓</button>
+            <span>Tu asistente inteligente</span>
+        </div>
+
+        <div id="chatBox" class="chat-area"></div>
+
+        <div class="quick-buttons">
+            <button onclick="sendQuickMessage('¿Quién te creó?')">¿Quién te creó?</button>
+            <button onclick="sendQuickMessage('¿Qué puedes hacer?')">¿Qué puedes hacer?</button>
+            <button onclick="limpiarChat()">Limpiar Chat</button>
+        </div>
+
+        <div class="ai-input">
+            <input id="messageInput" placeholder="Escribe tu pregunta...">
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = "chat.php"; // Usamos ruta relativa
+        let chatHistory = [];
+        let userName = localStorage.getItem("userName") || "Usuario";
+
+        window.onload = () => {
+            if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
+            addBotMessage("Hola 👋 " + userName + ". Soy Zenith AI, ¿en qué te ayudo hoy?");
+            chatHistory.push({ "role": "system", "content": "El usuario se llama " + userName });
+        };
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById("messageInput").value = text;
+            sendMessage();
+        }
+
+        function limpiarChat() {
+            document.getElementById("chatBox").innerHTML = "";
+            chatHistory = [{ "role": "system", "content": "El usuario se llama " + userName }];
+            addBotMessage("Historial borrado.");
+        }
+
+        function avatarHablar() { document.getElementById("aiMouth").classList.add("talking"); }
+        function avatarCallar() { document.getElementById("aiMouth").classList.remove("talking"); }
+
+        function setAIState(state) {
+            let status = document.getElementById("aiStatus");
+            status.innerText = state === "thinking" ? "Pensando..." : (state === "reply" ? "Respondiendo..." : "En espera");
+        }
+
+        function addUserMessage(text) {
+            let box = document.getElementById("chatBox");
+            let msg = document.createElement("div");
+            msg.classList.add("message", "user");
+            msg.innerText = text;
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function addBotMessage(text) {
+            let box = document.getElementById("chatBox");
+            let wrapper = document.createElement("div");
+            wrapper.classList.add("bot-message");
+            let avatar = document.createElement("div");
+            avatar.classList.add("bot-avatar");
+            avatar.innerText = "🤖";
+            let msg = document.createElement("div");
+            msg.classList.add("message", "bot");
+            msg.innerText = text;
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(msg);
+            box.appendChild(wrapper);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendMessage() {
+            let input = document.getElementById("messageInput");
+            let text = input.value.trim();
+            if (!text) return;
+
+            addUserMessage(text);
+            input.value = "";
+            chatHistory.push({ "role": "user", "content": text });
+            setAIState("thinking");
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                if (!response.ok) throw new Error("Error del servidor: " + response.status);
+
+                const data = await response.json();
+                let botReply = data.choices[0].message.content;
+
+                setAIState("reply");
+                avatarHablar();
+                addBotMessage(botReply);
+                chatHistory.push({ "role": "assistant", "content": botReply });
+
+                setTimeout(() => { avatarCallar(); setAIState("idle"); }, 3000);
+            } catch (error) {
+                avatarCallar();
+                addBotMessage("Error: " + error.message);
+                setAIState("idle");
+            }
+        }
+
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
