@@ -1,7 +1,7 @@
 /* Fondo general */
 body {
     background: var(--bg-body, linear-gradient(135deg,#0f172a,#020617));
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
     margin: 0;
     color: var(--text-color, white);
     transition: 0.3s;
@@ -15,6 +15,7 @@ body {
     --input-bg: #1e293b;
     --message-bot: #1e293b;
 }
+
 body.light-mode {
     --bg-body: #e2e8f0;
     --bg-container: #ffffff;
@@ -32,10 +33,11 @@ body.light-mode {
     margin-top: 10px;
     background: var(--bg-container);
     border-radius: 20px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 /* Header IA */
@@ -73,8 +75,36 @@ body.light-mode {
 .ai-input { display: flex; padding: 10px; gap: 10px; background: var(--bg-container); border-top: 1px solid #1e293b; }
 .ai-input input { flex: 1; padding: 12px; border-radius: 10px; border: none; outline: none; background: var(--input-bg); color: var(--text-color); }
 .ai-input button { background: linear-gradient(90deg,#9333ea,#3b82f6); border: none; color: white; font-size: 18px; padding: 10px 16px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-.ai-input button:hover { transform: scale(1.1); }
+.ai-input button:hover { transform: scale(1.05); }
+
+/* Botones rápidos estilo Glassmorphism */
+.quick-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 12px;
+    flex-wrap: wrap;
+}
+
+.quick-buttons button {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.quick-buttons button:hover {
+    background: rgba(124, 58, 237, 0.4);
+    border-color: #a78bfa;
+    transform: translateY(-2px);
+}
 
 /* Animaciones y Media Queries */
-@keyframes aiPulse { 0%{box-shadow: 0 0 5px #7c3aed, 0 0 15px #7c3aed;} 50%{box-shadow: 0 0 20px #7c3aed, 0 0 40px #3b82f6;} 100%{box-shadow: 0 0 5px #7c3aed, 0 0 15px #7c3aed;} }
-@media (max-width:600px){ .ai-container{ height:90vh; border-radius:0; margin-top:0; } .ai-header{ font-size:20px; padding:15px; } .message{ font-size:13px; max-width:85%; } #aiBackground{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; } }
+@keyframes pulseAI { 0%{box-shadow: 0 0 5px #7c3aed;} 50%{box-shadow: 0 0 20px #7c3aed;} 100%{box-shadow: 0 0 5px #7c3aed;} }
+@media (max-width:600px){ .ai-container{ height:90vh; border-radius:0; margin-top:0; } .ai-header{ font-size:20px; padding:15px; } .message{ font-size:13px; max-width:85%; } }
