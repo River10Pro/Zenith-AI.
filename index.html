@@ -26,7 +26,7 @@
         <div class="ai-header">
             Zenith AI 
             <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; color:white;">🌓</button>
-            <span>Tu asistente inteligente</span>
+            <span id="welcomeUser">Bienvenido, cargando...</span>
         </div>
 
         <div id="chatBox" class="chat-area"></div>
@@ -45,14 +45,23 @@
 
     <script>
         const API_ENDPOINT = "chat.php"; 
-
-        // 1. Recuperar o pedir el nombre al iniciar
         let userName = localStorage.getItem("userName");
-        if (!userName || userName === "null") {
-            userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
-            userName = (userName && userName.trim() !== "") ? userName : "Usuario";
-            localStorage.setItem("userName", userName);
+
+        // 1. Bloqueo de sesión: Pide nombre hasta que se ingrese uno válido
+        function checkUserName() {
+            if (!userName || userName === "null" || userName.trim() === "") {
+                userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
+                if (!userName || userName.trim() === "") {
+                    checkUserName(); // Vuelve a preguntar si se cancela
+                } else {
+                    localStorage.setItem("userName", userName);
+                    document.getElementById("welcomeUser").innerText = "Hola, " + userName;
+                }
+            } else {
+                document.getElementById("welcomeUser").innerText = "Hola, " + userName;
+            }
         }
+        checkUserName();
 
         // 2. Instrucción maestra con variaciones de identidad
         const getSystemPrompt = () => ({
