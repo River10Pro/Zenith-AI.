@@ -1,173 +1,361 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zenith AI Assistant</title>
-    <link rel="stylesheet" href="Styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zenith AI Assistant</title>
+<link rel="stylesheet" href="Styles.css">
 </head>
 <body>
-    <canvas id="aiBackground"></canvas>
 
-    <div class="ai-container">
-        <div class="ai-avatar-container">
-            <div class="ai-avatar" id="aiAvatar">
-                <div class="ai-face">
-                    <div class="ai-eyes">
-                        <div class="eye"></div>
-                        <div class="eye"></div>
-                    </div>
-                    <div class="ai-mouth" id="aiMouth"></div>
+<!-- LOADING -->
+<div id="loadingScreen">
+    <div class="loader"></div>
+    <h2>Iniciando Zenith AI...</h2>
+</div>
+
+<canvas id="aiBackground"></canvas>
+
+<div class="ai-container">
+
+    <div class="ai-avatar-container">
+
+        <div class="ai-avatar" id="aiAvatar">
+            <div class="ai-face">
+                <div class="ai-eyes">
+                    <div class="eye" id="eye1"></div>
+                    <div class="eye" id="eye2"></div>
                 </div>
+                <div class="ai-mouth neutral" id="aiMouth"></div>
             </div>
-            <div class="ai-status" id="aiStatus">En espera</div>
         </div>
 
-        <div class="ai-header">
-            Zenith AI 
-            <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; color:white;">🌓</button>
-            <span id="welcomeUser">Bienvenido, cargando...</span>
-        </div>
+        <div id="thoughtBubble" class="thought-bubble"></div>
 
-        <div id="chatBox" class="chat-area"></div>
-
-        <div class="quick-buttons">
-            <button onclick="sendQuickMessage('¿Quién te creó?')">¿Quién te creó?</button>
-            <button onclick="sendQuickMessage('¿Qué puedes hacer?')">¿Qué puedes hacer?</button>
-            <button onclick="limpiarChat()">Limpiar Chat</button>
-        </div>
-
-        <div class="ai-input">
-            <input id="messageInput" placeholder="Escribe tu pregunta...">
-            <button onclick="sendMessage()">➤</button>
-        </div>
+        <div class="ai-status" id="aiStatus">En espera</div>
     </div>
 
-    <script>
+    <div class="ai-header">
+        Zenith AI 🧠
+        <span id="welcomeUser">Bienvenido...</span>
+    </div>
+
+    <div id="chatBox" class="chat-area"></div>
+
+    <div class="quick-buttons">
+        <button onclick="sendQuickMessage('¿Quién te creó?')">¿Quién te creó?</button>
+        <button onclick="sendQuickMessage('¿Qué puedes hacer?')">¿Qué puedes hacer?</button>
+        <button onclick="limpiarChat()">Limpiar Chat</button>
+    </div>
+
+    <div class="ai-input">
+        <input id="messageInput" placeholder="Escribe tu pregunta...">
+        <button onclick="sendMessage()">➤</button>
+    </div>
+
+</div>
+
+<script>
+
 const API_ENDPOINT = "https://zenith-ai-2.onrender.com/chat";
-        let userName = localStorage.getItem("userName");
+const CREATOR_NAME = "Andrew Rivera";
 
-        // 1. Bloqueo de sesión: Pide nombre hasta que se ingrese uno válido
-        function checkUserName() {
-            if (!userName || userName === "null" || userName.trim() === "") {
-                userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
-                if (!userName || userName.trim() === "") {
-                    checkUserName(); // Vuelve a preguntar si se cancela
-                } else {
-                    localStorage.setItem("userName", userName);
-                    document.getElementById("welcomeUser").innerText = "Hola, " + userName;
-                }
-            } else {
-                document.getElementById("welcomeUser").innerText = "Hola, " + userName;
-            }
+let userName = localStorage.getItem("userName");
+let chatHistory = [];
+
+/* ==============================
+   LOADING
+============================== */
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        document.getElementById("loadingScreen").style.opacity = "0";
+        setTimeout(() => {
+            document.getElementById("loadingScreen").style.display = "none";
+        }, 600);
+    }, 1200);
+});
+
+/* ==============================
+   USER NAME
+============================== */
+function checkUserName() {
+    if (!userName || userName.trim() === "") {
+        userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
+        if (!userName || userName.trim() === "") {
+            checkUserName();
+        } else {
+            localStorage.setItem("userName", userName);
         }
-        checkUserName();
+    }
+    document.getElementById("welcomeUser").innerText = "Hola, " + userName;
+}
+checkUserName();
 
-        // 2. Instrucción maestra con variaciones de identidad
-        const getSystemPrompt = () => ({
-            "role": "system", 
-            "content": `Eres Zenith AI, un asistente inteligente y amigable. Tu creador y desarrollador es Andrew Rivera. 
-            Si te preguntan quién te creó, **nunca** menciones a Meta. Responde de forma creativa y profesional. Ejemplos de estilo:
-            - "Fui diseñado y construido desde cero por Andrew Rivera."
-            - "Mi lógica y mi existencia son un proyecto orgullosamente desarrollado por Andrew Rivera."
-            - "Tu asistente, creado con dedicación por Andrew Rivera."
-            El usuario actual es ${userName}.`
+/* ==============================
+   RESTORE CHAT
+============================== */
+const saved = localStorage.getItem("chatHistory");
+if (saved) {
+    chatHistory = JSON.parse(saved);
+    chatHistory.forEach(msg => {
+        if (msg.role === "user") addUserMessage(msg.content);
+        if (msg.role === "assistant") addBotMessage(msg.content);
+    });
+} else {
+    chatHistory = [];
+    addBotMessage(`¡Hola ${userName}! 👋 ¿En qué te ayudo hoy?`);
+}
+
+/* ==============================
+   PARTICLES BACKGROUND
+============================== */
+const canvas = document.getElementById("aiBackground");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let particles = [];
+
+class Particle {
+    constructor(){
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+    }
+    update(){
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if(this.x > canvas.width) this.x = 0;
+        if(this.x < 0) this.x = canvas.width;
+        if(this.y > canvas.height) this.y = 0;
+        if(this.y < 0) this.y = canvas.height;
+    }
+    draw(){
+        ctx.fillStyle = "rgba(0,198,255,0.6)";
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+        ctx.fill();
+    }
+}
+
+for(let i=0;i<80;i++){
+    particles.push(new Particle());
+}
+
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+        p.update();
+        p.draw();
+    });
+    requestAnimationFrame(animate);
+}
+animate();
+
+/* ==============================
+   EMOCIONES Y ANIMACIONES
+============================== */
+function setEmotion(type){
+    const mouth = document.getElementById("aiMouth");
+    mouth.className = "ai-mouth " + type;
+}
+
+
+function moveEyes(){
+    const eyes = document.querySelectorAll(".eye");
+    eyes.forEach(eye=>{
+        const x = (Math.random()-0.5)*4;
+        const y = (Math.random()-0.5)*4;
+        eye.style.transform = `translate(${x}px,${y}px)`;
+    });
+}
+setInterval(moveEyes,2000);
+
+/* ==============================
+   CHAT FUNCTIONS
+============================== */
+function addUserMessage(text){
+    let box = document.getElementById("chatBox");
+    let msg = document.createElement("div");
+    msg.classList.add("message","user");
+    msg.innerText = text;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+}
+
+function addBotMessage(text){
+    let box = document.getElementById("chatBox");
+    let wrapper = document.createElement("div");
+    wrapper.classList.add("bot-message");
+
+    let avatar = document.createElement("div");
+    avatar.classList.add("bot-avatar");
+    avatar.innerText="🤖";
+
+    let msg=document.createElement("div");
+    msg.classList.add("message","bot");
+    msg.innerText=text;
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(msg);
+    box.appendChild(wrapper);
+    box.scrollTop = box.scrollHeight;
+}
+
+function detectarEmocion(text){
+    const t=text.toLowerCase();
+
+    if(t.includes("feo")||t.includes("tonto")||t.includes("estupido")){
+        setEmotion("angry");
+        showThought("Eso fue grosero 😠");
+    }
+    else if(t.includes("gracias")||t.includes("genial")){
+        setEmotion("happy");
+        showThought("Me agradas 😎");
+    }
+    else{
+        setEmotion("neutral");
+    }
+}
+
+function sendQuickMessage(text){
+    document.getElementById("messageInput").value=text;
+    sendMessage();
+}
+
+function limpiarChat(){
+    localStorage.removeItem("chatHistory");
+    document.getElementById("chatBox").innerHTML="";
+    chatHistory=[];
+}
+function showThought(text) {
+    const bubble = document.getElementById("thoughtBubble");
+
+    if (!bubble) return;
+
+    bubble.innerText = text;
+    bubble.classList.add("active");
+
+    clearTimeout(bubble.timeout);
+
+    bubble.timeout = setTimeout(() => {
+        bubble.classList.remove("active");
+    }, 3000);
+}
+
+/* ==============================
+   SEND MESSAGE
+============================== */
+async function sendMessage(){
+
+    let input=document.getElementById("messageInput");
+    let text=input.value.trim();
+    if(!text) return;
+
+    addUserMessage(text);
+    detectarEmocion(text);
+    input.value="";
+
+    // RESPUESTA DIRECTA SOBRE CREADOR
+    if(text.toLowerCase().includes("quien te creo") ||
+       text.toLowerCase().includes("quién te creó")){
+        let reply=`Fui diseñado y desarrollado con dedicación por ${CREATOR_NAME}.`;
+		 showThought("Orgulloso de mi creador 😎");
+        setEmotion("happy");
+       
+        addBotMessage(reply);
+        return;
+    }
+
+    showThought("Pensando...");
+	setEmotion("happy");
+    document.getElementById("aiStatus").innerText="Pensando...";
+
+    const typing=document.createElement("div");
+    typing.classList.add("typing");
+    typing.innerHTML="<span></span><span></span><span></span>";
+    document.getElementById("chatBox").appendChild(typing);
+
+    try{
+        const response=await fetch(API_ENDPOINT,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({messages:[{role:"user",content:text}]})
         });
 
-        let chatHistory = [getSystemPrompt()];
+        typing.remove();
 
-        window.onload = () => {
-            if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
-            addBotMessage(`¡Hola ${userName}! 👋 Soy Zenith AI, creado por Andrew Rivera. ¿En qué te ayudo hoy?`);
-        };
+        const data=await response.json();
+        let reply=data.choices[0].message.content;
 
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-        }
+        setEmotion("happy");
+        showThought("Ya sé qué decir 😎");
+        document.getElementById("aiStatus").innerText="En espera";
 
-        function sendQuickMessage(text) {
-            document.getElementById("messageInput").value = text;
-            sendMessage();
-        }
+        addBotMessage(reply);
 
-        function limpiarChat() {
-            document.getElementById("chatBox").innerHTML = "";
-            chatHistory = [getSystemPrompt()];
-            addBotMessage("Historial borrado. Aquí estoy para ti, " + userName + ".");
-        }
+        chatHistory.push({role:"user",content:text});
+        chatHistory.push({role:"assistant",content:reply});
+        localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
 
-        function avatarHablar() { document.getElementById("aiMouth").classList.add("talking"); }
-        function avatarCallar() { document.getElementById("aiMouth").classList.remove("talking"); }
+    }catch(error){
+        typing.remove();
+        setEmotion("angry");
+        showThought("Error 😠");
+        addBotMessage("Error conectando con el servidor.");
+    }
+}
 
-        function setAIState(state) {
-            let status = document.getElementById("aiStatus");
-            status.innerText = state === "thinking" ? "Pensando..." : (state === "reply" ? "Respondiendo..." : "En espera");
-        }
+document.getElementById("messageInput")
+.addEventListener("keypress",e=>{
+    if(e.key==="Enter") sendMessage();
+});
+/* ==============================
+   BURBUJA AUTOMÁTICA CADA 10s
+============================== */
 
-        function addUserMessage(text) {
-            let box = document.getElementById("chatBox");
-            let msg = document.createElement("div");
-            msg.classList.add("message", "user");
-            msg.innerText = text;
-            box.appendChild(msg);
-            box.scrollTop = box.scrollHeight;
-        }
+const thoughts = [
+    "Estoy analizando datos...",
+    "Hmm interesante 🤔",
+    "Andrew es mi creador 😎",
+    "Procesando información...",
+    "Me gusta ayudar 🚀",
+    "Siempre estoy aprendiendo...",
+    "Modo inteligente activado 🧠",
+	"No tiene nada que ver, pero soy batman",
+	"Dice, Ra Rauw",
+	"Sabes que Crisitano es el mejor jugador del mundo?",
+	"Tu con el, temazo brok..",
+	"No me despiertes de este sueño, que me despierto jajaja",
+	"Te falto una coma bro",
+	"Que hace una mujer tan bella por aqui??",
+	"Analizando tu pregunta...mejor no opino",
+	"Vamos Real Madrid!!",
+	"Siuuuu",
+	"Sabes algo?, yo tampoco jejeje"
 
-        function addBotMessage(text) {
-            let box = document.getElementById("chatBox");
-            let wrapper = document.createElement("div");
-            wrapper.classList.add("bot-message");
-            let avatar = document.createElement("div");
-            avatar.classList.add("bot-avatar");
-            avatar.innerText = "🤖";
-            let msg = document.createElement("div");
-            msg.classList.add("message", "bot");
-            msg.innerText = text;
-            wrapper.appendChild(avatar);
-            wrapper.appendChild(msg);
-            box.appendChild(wrapper);
-            box.scrollTop = box.scrollHeight;
-        }
+];
 
-        async function sendMessage() {
-            let input = document.getElementById("messageInput");
-            let text = input.value.trim();
-            if (!text) return;
+const bubble = document.getElementById("thoughtBubble");
 
-            addUserMessage(text);
-            input.value = "";
-            chatHistory.push({ "role": "user", "content": text });
-            setAIState("thinking");
-            avatarHablar();
+function randomThought() {
+    const random = thoughts[Math.floor(Math.random() * thoughts.length)];
+    bubble.innerText = random;
+}
 
-            try {
-                const response = await fetch(API_ENDPOINT, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ messages: chatHistory })
-                });
+// Mostrar una al iniciar
+randomThought();
 
-                if (!response.ok) throw new Error("Error del servidor: " + response.status);
+// Cambiar cada 10 segundos
+setInterval(randomThought, 10000);
 
-                const data = await response.json();
-                let botReply = data.choices[0].message.content;
-
-                setAIState("reply");
-                addBotMessage(botReply);
-                chatHistory.push({ "role": "assistant", "content": botReply });
-
-                setTimeout(() => { avatarCallar(); setAIState("idle"); }, 3000);
-            } catch (error) {
-                avatarCallar();
-                addBotMessage("Error: " + error.message);
-                setAIState("idle");
-            }
-        }
-
-        document.getElementById("messageInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
-        });
-    </script>
+</script>
 </body>
 </html>
