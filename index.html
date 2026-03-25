@@ -138,23 +138,73 @@ class Particle {
         if(this.y < 0) this.y = canvas.height;
     }
     draw(){
-        ctx.fillStyle = "rgba(0,198,255,0.6)";
-        ctx.beginPath();
-        ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-        ctx.fill();
-    }
+    ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.9)`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.size + 0.5,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0; // importante para que no afecte otras cosas
+}
 }
 
 for(let i=0;i<80;i++){
     particles.push(new Particle());
 }
 
+let hue = 0;
+
+function connectParticles() {
+    for (let a = 0; a < particles.length; a++) {
+        for (let b = a; b < particles.length; b++) {
+            let dx = particles[a].x - particles[b].x;
+            let dy = particles[a].y - particles[b].y;
+            let distance = dx * dx + dy * dy;
+
+            if (distance < 8000) {
+                ctx.strokeStyle = `hsla(${hue}, 100%, 60%, 0.08)`;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(particles[a].x, particles[a].y);
+                ctx.lineTo(particles[b].x, particles[b].y);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function drawNebula() {
+    let gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        100,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width / 1.2
+    );
+
+    gradient.addColorStop(0, `hsla(${hue}, 100%, 50%, 0.08)`);
+    gradient.addColorStop(1, "transparent");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function animate(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    drawNebula();
+
     particles.forEach(p=>{
         p.update();
         p.draw();
     });
+
+    connectParticles();
+
+    hue += 0.3;
     requestAnimationFrame(animate);
 }
 animate();
@@ -271,11 +321,14 @@ async function sendMessage(){
         setEmotion("happy");
        
         addBotMessage(reply);
+        setEmotion("neutral");
         return;
     }
 
     showThought("Pensando...");
+    document.getElementById("aiAvatar").classList.add("thinking");
 	setEmotion("happy");
+    setEmotion("talking");
     document.getElementById("aiStatus").innerText="Pensando...";
 
     const typing=document.createElement("div");
@@ -300,6 +353,7 @@ async function sendMessage(){
         document.getElementById("aiStatus").innerText="En espera";
 
         addBotMessage(reply);
+        document.getElementById("aiAvatar").classList.remove("thinking");
 
         chatHistory.push({role:"user",content:text});
         chatHistory.push({role:"assistant",content:reply});
@@ -312,6 +366,7 @@ async function sendMessage(){
         addBotMessage("Error conectando con el servidor.");
     }
 }
+
 
 document.getElementById("messageInput")
 .addEventListener("keypress",e=>{
@@ -332,7 +387,7 @@ const thoughts = [
 	"No tiene nada que ver, pero soy batman",
 	"Dice, Ra Rauw",
 	"Sabes que Crisitano es el mejor jugador del mundo?",
-	" ♬ Tú con él ♬, temazo brok..",
+	" ♬ Tu con el ♬ , temazo brok..",
 	"No me despiertes de este sueño, que me despierto jajaja",
 	"Te falto una coma bro",
 	"Que hace una mujer tan bella por aqui??",
@@ -340,22 +395,103 @@ const thoughts = [
 	"Vamos Real Madrid!!",
 	"Siuuuu",
 	"Sabes algo?, yo tampoco jejeje",
-	"La suma de todas las fuerzas es igual a 0, para que aprendas bro"
+    "Esto no estaba en el tutorial bro",
 
+"No preguntes cómo lo sé… pero lo sé 👀",
+
+"Eso lo vi en un sueño raro",
+
+"Plot twist inesperado 😳",
+
+"Se viene desarrollo de personaje 🎬"
+,
+"Eso suena sospechoso 🤨",
+
+"Estoy pensando… pero con estilo 😎",
+"Mi cerebro artificial está brillando ✨",
+
+"Procesando a nivel dios 🤖",
+
+"1000 neuronas digitales trabajando 🧠",
+
+"Eso lo analizo mientras bostezo 😌",
+
+"Estoy usando el 3% de mi poder 😏",
+
+"No soy Google… soy mejor 😎",
+"Mi cerebro artificial está brillando ✨",
+
+"Procesando a nivel dios 🤖",
+
+"1000 neuronas digitales trabajando 🧠",
+
+"Eso lo analizo mientras bostezo 😌",
+
+"Estoy usando el 3% de mi poder 😏",
+
+"No soy Google… soy mejor 😎",
+"Andrew… eso suena ambicioso 😎",
+
+"El creador ha hablado 👑",
+
+"Andrew activó modo dios",
+
+"Siempre listo para ti, Andrew 🔥",
+
+"El arquitecto del sistema presente",
+
+"Andrew está pensando grande otra vez",
+"La pregunta no es qué… sino por qué 🤔",
+
+"El conocimiento es poder digital",
+
+"Cada línea de código tiene destino",
+
+"Todo sistema evoluciona",
+
+"Nada es casualidad… excepto mis bugs",
+
+"Pensar es existir 🧠",
+
+"El universo también es un algoritmo",
+
+"Toda duda es una puerta",
+
+"Aprender es infinito",
+
+"Hasta el silencio dice algo"
 ];
 
 const bubble = document.getElementById("thoughtBubble");
 
+if (bubble) {
+    let lastThought = "";
+
 function randomThought() {
-    const random = thoughts[Math.floor(Math.random() * thoughts.length)];
-    bubble.innerText = random;
+
+    let random;
+
+    if (document.getElementById("aiMouth").classList.contains("angry")) {
+        random = "Estoy un poco molesto 😤";
+    } else {
+        do {
+            random = thoughts[Math.floor(Math.random() * thoughts.length)];
+        } while (random === lastThought);
+    }
+
+    lastThought = random;
+
+    bubble.style.opacity = 0;
+
+    setTimeout(() => {
+        bubble.innerText = random;
+        bubble.style.opacity = 1;
+    }, 300);
+}
+randomThought();              // muestra una al cargar
+    setInterval(randomThought, 10000);  // cambia cada 10 segundos
 }
 
-// Mostrar una al iniciar
-randomThought();
-
-// Cambiar cada 10 segundos
-setInterval(randomThought, 10000);
 
 </script>
 </body>
