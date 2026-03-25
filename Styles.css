@@ -9,7 +9,10 @@
 }
 
 body {
-    background: radial-gradient(circle at top, #1a1a2e, #0f0f1a 70%);
+    background:
+        radial-gradient(circle at 20% 20%, rgba(123,47,247,0.15), transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(0,198,255,0.12), transparent 40%),
+        radial-gradient(circle at bottom, #0f0f1a, #070710 80%);
     color: white;
     overflow-x: hidden;
 }
@@ -194,6 +197,8 @@ body {
     height: 12px;
     background: white;
     clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    transition: opacity 0.4s ease;
+    opacity: 1;
 }
 
 .thought-bubble.active {
@@ -211,7 +216,9 @@ body {
     background: linear-gradient(90deg, #7b2ff7, #00c6ff);
     font-size: 20px;
     font-weight: bold;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    box-shadow:
+        0 6px 20px rgba(0,0,0,0.4),
+        0 0 25px rgba(0,198,255,0.3);
 }
 
 #welcomeUser {
@@ -250,10 +257,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { 
+        opacity: 0; 
+        transform: translateY(8px) scale(0.96);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+    }
 }
-
 .user {
     align-self: flex-end;
     background: linear-gradient(135deg, #00c6ff, #0072ff);
@@ -270,9 +282,10 @@ body {
 }
 
 .bot {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
-    color: #ddd;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #e6e6e6;
 }
 
 /* =========================
@@ -333,7 +346,13 @@ body {
     border-radius: 12px;
     cursor: pointer;
     color: white;
-    transition: 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0,198,255,0.4);
+}
+
+.ai-input button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 25px rgba(0,198,255,0.7);
 }
 
 .ai-input button:hover {
@@ -456,8 +475,7 @@ body {
         position: sticky;
         bottom: 0;
     }
+    .ai-container {
+    backdrop-filter: blur(2px);
 }
-
-/* Animaciones y Media Queries */
-@keyframes pulseAI { 0%{box-shadow: 0 0 5px #7c3aed;} 50%{box-shadow: 0 0 20px #7c3aed;} 100%{box-shadow: 0 0 5px #7c3aed;} }
-@media (max-width:600px){ .ai-container{ height:90vh; border-radius:0; margin-top:0; } .ai-header{ font-size:20px; padding:15px; } .message{ font-size:13px; max-width:85%; } }
+}
