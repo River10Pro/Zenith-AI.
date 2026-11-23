@@ -98,7 +98,7 @@ app.post('/chat', async (req, res) => {
                         model,
                         messages: outgoingMessages,
                         temperature: 0.7,
-                        max_tokens: 1024
+                        max_tokens: imageBase64 ? 800 : 1024
                     }),
                     signal: AbortSignal.timeout(45000)
                 });
