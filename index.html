@@ -316,7 +316,7 @@ setInterval(moveEyes,2000);
 function addUserMessage(text, imageUrl=null){
     let box = document.getElementById("chatBox");
     let msg = document.createElement("div");
-    msg.classList.add("message","user");
+    msg.classList.add("message","user","user-message");
     if (text) {
         const caption=document.createElement("div");
         caption.className="user-message-text";
@@ -324,16 +324,28 @@ function addUserMessage(text, imageUrl=null){
         msg.appendChild(caption);
     }
     if (imageUrl) {
+        const imageCard=document.createElement("div");
+        imageCard.className="chat-image-card";
+        const imageLabel=document.createElement("span");
+        imageLabel.className="chat-image-label";
+        imageLabel.innerText="📷 Imagen adjunta";
         const image=document.createElement("img");
         image.className="chat-image";
-        image.src=imageUrl;
-        image.alt="Imagen enviada";
-        image.loading="lazy";
+        image.alt="Imagen enviada en la conversación";
+        image.decoding="async";
+        image.addEventListener("load",()=>imageCard.classList.add("image-loaded"),{once:true});
+        image.addEventListener("error",()=>{
+            image.remove();
+            imageLabel.innerText="📷 Imagen adjunta (vista previa no disponible)";
+            imageCard.classList.add("image-load-failed");
+        },{once:true});
         image.addEventListener("click",()=>openImageLightbox(imageUrl));
-        msg.appendChild(image);
+        imageCard.append(imageLabel,image);
+        msg.appendChild(imageCard);
+        image.src=imageUrl;
     }
     box.appendChild(msg);
-    box.scrollTop = box.scrollHeight;
+    requestAnimationFrame(()=>{ box.scrollTop = box.scrollHeight; });
 }
 
 function addBotMessage(text, withCopy=false) {
@@ -467,9 +479,9 @@ async function sendMessage(){
         return;
     }
 
-    const sentImage=selectedImage;
     const imagePreview=selectedImageThumbnail;
-    addUserMessage(text,sentImage);
+    const sentImage=selectedImage;
+    addUserMessage(text,imagePreview);
     detectarEmocion(text);
     input.value="";
     isSending=true;
