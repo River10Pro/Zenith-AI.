@@ -2,14 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <title>Zenith AI Assistant</title>
 
 <link rel="stylesheet" href="Styles.css">
-
-<!-- Icono -->
-<link rel="icon" href="resources/img/logo.png" type="image/png">
 
 <!-- Metas -->
 <meta name="description" content="Zenith IA.">
@@ -20,13 +17,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<!-- JS -->
-<script src="resources/libs/externos/jquery/jquery.js"></script>
 </head>
 <body>
- 
-    </head>
-    <body>
 <!-- LOADING -->
 <div id="loadingScreen">
     <div class="loader"></div>
@@ -35,44 +27,71 @@
 
 <canvas id="aiBackground"></canvas>
 
-<div class="ai-container">
+<aside class="zenith-sidebar" id="zenithSidebar">
+    <div class="brand">
+        <div class="brand-mark">Z</div>
+        <div>
+            <strong>Zenith</strong>
+            <span>AI Companion</span>
+        </div>
+    </div>
+    <button class="new-chat-button" type="button" onclick="limpiarChat()">
+        <span>＋</span> Nueva conversación
+    </button>
+    <div class="sidebar-section">
+        <small>HISTORIAL</small>
+        <button class="history-current" type="button" onclick="document.getElementById('chatBox').scrollTo({top:0,behavior:'smooth'})">
+            <span class="history-dot"></span>
+            Conversación actual
+        </button>
+    </div>
+    <div class="sidebar-footer">
+        <button class="profile-button" type="button" onclick="editarNombre()">
+            <span class="profile-avatar" id="profileAvatar">A</span>
+            <span>
+                <strong id="profileName">Usuario</strong>
+                <small>Zenith Personal</small>
+            </span>
+        </button>
+    </div>
+</aside>
 
-    <div class="ai-avatar-container">
-
-        <div class="ai-avatar" id="aiAvatar">
-            <div class="ai-face">
-                <div class="ai-eyes">
-                    <div class="eye" id="eye1"></div>
-                    <div class="eye" id="eye2"></div>
-                </div>
-                <div class="ai-mouth neutral" id="aiMouth"></div>
+<main class="ai-shell">
+    <header class="topbar">
+        <button class="icon-button menu-button" id="menuButton" type="button" aria-label="Abrir menú">☰</button>
+        <div class="topbar-title">
+            <span class="status-dot"></span>
+            <div>
+                <strong>Zenith AI</strong>
+                <small id="aiStatus">En línea</small>
             </div>
         </div>
+        <button class="icon-button" id="themeButton" type="button" aria-label="Cambiar tema" title="Cambiar tema">◐</button>
+    </header>
 
-        <div id="thoughtBubble" class="thought-bubble"></div>
+    <section class="chat-stage">
+        <div id="chatBox" class="chat-area"></div>
+    </section>
 
-        <div class="ai-status" id="aiStatus">En espera</div>
-    </div>
+    <section class="composer-wrap">
+        <div class="quick-buttons">
+            <button type="button" onclick="sendQuickMessage('Explícame una idea de forma sencilla')">✨ Explicar</button>
+            <button type="button" onclick="sendQuickMessage('Ayúdame a crear una idea original')">💡 Crear</button>
+            <button type="button" onclick="sendQuickMessage('¿Qué puedes hacer por mí?')">🧠 Capacidades</button>
+        </div>
+        <div id="imagePreview" class="image-preview-container" hidden></div>
+        <div class="ai-input">
+            <button class="action-button" id="imageButton" type="button" title="Adjuntar imagen" onclick="document.getElementById('imageInput').click()">＋</button>
+            <input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <button class="action-button" id="micButton" type="button" title="Hablar" aria-label="Hablar">🎙</button>
+            <input id="messageInput" placeholder="Pregúntale a Zenith..." maxlength="4000" autocomplete="off">
+            <button id="sendButton" type="button" onclick="sendMessage()" aria-label="Enviar mensaje">➤</button>
+        </div>
+        <small class="disclaimer">Zenith puede cometer errores. Revisa información importante.</small>
+    </section>
+</main>
 
-    <div class="ai-header">
-        Zenith AI 🧠
-        <span id="welcomeUser">Bienvenido...</span>
-    </div>
-
-    <div id="chatBox" class="chat-area"></div>
-
-    <div class="quick-buttons">
-        <button onclick="sendQuickMessage('¿Quién te creó?')">¿Quién te creó?</button>
-        <button onclick="sendQuickMessage('¿Qué puedes hacer?')">¿Qué puedes hacer?</button>
-        <button onclick="limpiarChat()">Limpiar Chat</button>
-    </div>
-
-    <div class="ai-input">
-        <input id="messageInput" placeholder="Escribe tu pregunta...">
-        <button onclick="sendMessage()">➤</button>
-    </div>
-
-</div>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <script>
 
@@ -81,6 +100,9 @@ const CREATOR_NAME = "Andrew Rivera";
 
 let userName = localStorage.getItem("userName");
 let chatHistory = [];
+let selectedImage = null;
+let isSending = false;
+let zenithMemory = localStorage.getItem("zenithMemory") || "";
 
 /* ==============================
    LOADING
@@ -99,16 +121,39 @@ window.addEventListener("load", () => {
 ============================== */
 function checkUserName() {
     if (!userName || userName.trim() === "") {
-        userName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
-        if (!userName || userName.trim() === "") {
-            checkUserName();
-        } else {
-            localStorage.setItem("userName", userName);
-        }
+        const enteredName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
+        userName = (enteredName || "amigo").trim().slice(0, 40) || "amigo";
+        localStorage.setItem("userName", userName);
     }
-    document.getElementById("welcomeUser").innerText = "Hola, " + userName;
+    const profileName=document.getElementById("profileName");
+    const profileAvatar=document.getElementById("profileAvatar");
+    if(profileName) profileName.innerText=userName;
+    if(profileAvatar) profileAvatar.innerText=userName.charAt(0).toUpperCase();
 }
 checkUserName();
+
+function editarNombre(){
+    const nuevoNombre=prompt("¿Cómo quieres que te llame?", userName);
+    if(nuevoNombre && nuevoNombre.trim()){
+        userName=nuevoNombre.trim().slice(0,40);
+        localStorage.setItem("userName", userName);
+        const profileName=document.getElementById("profileName");
+        const profileAvatar=document.getElementById("profileAvatar");
+        if(profileName) profileName.innerText=userName;
+        if(profileAvatar) profileAvatar.innerText=userName.charAt(0).toUpperCase();
+        showThought("Ahora te llamo "+userName+" 😎");
+    }
+    const nuevaMemoria=prompt(
+        "¿Qué información importante debo recordar? Déjalo vacío para borrar la memoria.",
+        zenithMemory
+    );
+    if(nuevaMemoria !== null){
+        zenithMemory=nuevaMemoria.trim().slice(0,1000);
+        if(zenithMemory) localStorage.setItem("zenithMemory",zenithMemory);
+        else localStorage.removeItem("zenithMemory");
+        showThought(zenithMemory ? "Memoria actualizada 🧠" : "Memoria borrada");
+    }
+}
 
 /* ==============================
    RESTORE CHAT
@@ -233,7 +278,7 @@ animate();
 ============================== */
 function setEmotion(type){
     const mouth = document.getElementById("aiMouth");
-    mouth.className = "ai-mouth " + type;
+    if(mouth) mouth.className = "ai-mouth " + type;
 }
 
 
@@ -259,7 +304,7 @@ function addUserMessage(text){
     box.scrollTop = box.scrollHeight;
 }
 
-function addBotMessage(text){
+function addBotMessage(text, withCopy=false) {
     let box = document.getElementById("chatBox");
     let wrapper = document.createElement("div");
     wrapper.classList.add("bot-message");
@@ -271,6 +316,20 @@ function addBotMessage(text){
     let msg=document.createElement("div");
     msg.classList.add("message","bot");
     msg.innerText=text;
+
+    if (withCopy) {
+        let copy=document.createElement("button");
+        copy.className="copy-message";
+        copy.type="button";
+        copy.innerText="Copiar";
+        copy.onclick=async()=> {
+            await navigator.clipboard.writeText(text);
+            copy.innerText="Copiado";
+            setTimeout(()=>copy.innerText="Copiar",1500);
+        };
+        msg.appendChild(document.createElement("br"));
+        msg.appendChild(copy);
+    }
 
     wrapper.appendChild(avatar);
     wrapper.appendChild(msg);
@@ -323,14 +382,21 @@ function showThought(text) {
    SEND MESSAGE
 ============================== */
 async function sendMessage(){
-
+    if (isSending) return;
     let input=document.getElementById("messageInput");
     let text=input.value.trim();
     if(!text) return;
+    if (text.length > 4000) {
+        showThought("Mensaje demasiado largo");
+        return;
+    }
 
     addUserMessage(text);
     detectarEmocion(text);
     input.value="";
+    isSending=true;
+    document.getElementById("sendButton").disabled=true;
+    document.getElementById("imageButton").disabled=true;
 
     // RESPUESTA DIRECTA SOBRE CREADOR
     if(text.toLowerCase().includes("quien te creo") ||
@@ -340,12 +406,19 @@ async function sendMessage(){
         setEmotion("happy");
        
         addBotMessage(reply);
+        chatHistory.push({role:"user",content:text});
+        chatHistory.push({role:"assistant",content:reply});
+        localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
         setEmotion("neutral");
+        isSending=false;
+        document.getElementById("sendButton").disabled=false;
+        document.getElementById("imageButton").disabled=false;
+        input.focus();
         return;
     }
 
     showThought("Pensando...");
-    document.getElementById("aiAvatar").classList.add("thinking");
+    document.getElementById("aiAvatar")?.classList.add("thinking");
 	setEmotion("happy");
     setEmotion("talking");
     document.getElementById("aiStatus").innerText="Pensando...";
@@ -359,30 +432,67 @@ async function sendMessage(){
         const response=await fetch(API_ENDPOINT,{
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({messages:[{role:"user",content:text}]})
+            body:JSON.stringify({
+                messages:[...chatHistory.slice(-20),{role:"user",content:text}],
+                image:selectedImage,
+                memory:zenithMemory
+            })
         });
 
         typing.remove();
 
         const data=await response.json();
-        let reply=data.choices[0].message.content;
+        if (!response.ok) {
+            throw new Error(data.error || "No se pudo obtener una respuesta.");
+        }
+        let reply=data.reply ||
+            (typeof data.choices?.[0]?.message?.content === "string"
+                ? data.choices[0].message.content
+                : Array.isArray(data.choices?.[0]?.message?.content)
+                    ? data.choices[0].message.content
+                        .filter(part => typeof part?.text === "string")
+                        .map(part => part.text)
+                        .join("\n")
+                    : "");
+
+        reply = reply?.trim();
+        if (!reply) throw new Error("El proveedor respondió sin texto.");
 
         setEmotion("happy");
         showThought("Ya sé qué decir 😎");
         document.getElementById("aiStatus").innerText="En espera";
 
-        addBotMessage(reply);
-        document.getElementById("aiAvatar").classList.remove("thinking");
+        addBotMessage(reply, true);
+        speakZenithReply(reply);
+        document.getElementById("aiAvatar")?.classList.remove("thinking");
 
         chatHistory.push({role:"user",content:text});
         chatHistory.push({role:"assistant",content:reply});
         localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
+        clearSelectedImage();
 
     }catch(error){
         typing.remove();
         setEmotion("angry");
         showThought("Error 😠");
-        addBotMessage("Error conectando con el servidor.");
+        addBotMessage(error.message || "Error conectando con el servidor.");
+        document.getElementById("aiAvatar")?.classList.remove("thinking");
+        document.getElementById("aiStatus").innerText="En espera";
+    }finally{
+        isSending=false;
+        document.getElementById("sendButton").disabled=false;
+        document.getElementById("imageButton").disabled=false;
+        input.focus();
+    }
+
+    function speakZenithReply(text){
+        if(!("speechSynthesis" in window) || localStorage.getItem("zenithVoice") === "off") return;
+        window.speechSynthesis.cancel();
+        const speech=new SpeechSynthesisUtterance(text.slice(0,1200));
+        speech.lang="es-ES";
+        speech.rate=1;
+        speech.pitch=1.05;
+        window.speechSynthesis.speak(speech);
     }
 }
 
@@ -391,6 +501,106 @@ document.getElementById("messageInput")
 .addEventListener("keypress",e=>{
     if(e.key==="Enter") sendMessage();
 });
+
+document.getElementById("imageInput").addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg","image/png","image/webp"].includes(file.type)) {
+        showThought("Formato de imagen no compatible");
+        event.target.value="";
+        return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        showThought("La imagen supera 2 MB");
+        event.target.value="";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        selectedImage = reader.result;
+        const preview = document.getElementById("imagePreview");
+        preview.hidden=false;
+        preview.innerHTML="";
+        const wrapper=document.createElement("span");
+        wrapper.className="preview-wrapper";
+        const image=document.createElement("img");
+        image.className="preview-image";
+        image.src=selectedImage;
+        const remove=document.createElement("button");
+        remove.className="remove-image";
+        remove.type="button";
+        remove.innerText="×";
+        remove.onclick=clearSelectedImage;
+        wrapper.append(image,remove);
+        preview.appendChild(wrapper);
+    };
+    reader.readAsDataURL(file);
+});
+
+function clearSelectedImage() {
+    selectedImage=null;
+    document.getElementById("imageInput").value="";
+    document.getElementById("imagePreview").hidden=true;
+    document.getElementById("imagePreview").innerHTML="";
+}
+
+const menuButton=document.getElementById("menuButton");
+const zenithSidebar=document.getElementById("zenithSidebar");
+const sidebarBackdrop=document.getElementById("sidebarBackdrop");
+
+function setSidebar(open){
+    zenithSidebar.classList.toggle("open",open);
+    sidebarBackdrop.classList.toggle("open",open);
+}
+
+menuButton?.addEventListener("click",()=>setSidebar(true));
+sidebarBackdrop?.addEventListener("click",()=>setSidebar(false));
+
+const themeButton=document.getElementById("themeButton");
+const savedTheme=localStorage.getItem("zenithTheme");
+if(savedTheme==="light") document.body.classList.add("light-theme");
+
+themeButton?.addEventListener("click",()=>{
+    document.body.classList.toggle("light-theme");
+    localStorage.setItem(
+        "zenithTheme",
+        document.body.classList.contains("light-theme") ? "light" : "dark"
+    );
+});
+
+const micButton=document.getElementById("micButton");
+const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(SpeechRecognition){
+    const recognition=new SpeechRecognition();
+    recognition.lang="es-ES";
+    recognition.interimResults=false;
+    recognition.continuous=false;
+
+    micButton?.addEventListener("click",()=>{
+        if(isSending) return;
+        micButton.classList.add("listening");
+        showThought("Te estoy escuchando...");
+        recognition.start();
+    });
+
+    recognition.onresult=(event)=>{
+        const text=event.results[0][0].transcript;
+        document.getElementById("messageInput").value=text;
+        sendMessage();
+    };
+    recognition.onend=()=>{
+        micButton?.classList.remove("listening");
+    };
+    recognition.onerror=()=>{
+        micButton?.classList.remove("listening");
+        showThought("No pude escuchar tu voz");
+    };
+}else if(micButton){
+    micButton.disabled=true;
+    micButton.title="Reconocimiento de voz no disponible";
+}
 /* ==============================
    BURBUJA AUTOMÁTICA CADA 10s
 ============================== */
