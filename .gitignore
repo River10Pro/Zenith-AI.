@@ -33,3 +33,4 @@ ZenithIA.apk
 *.log
 *.apk
 *.aab
+/resources/ZenithAI/
