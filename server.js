@@ -77,8 +77,10 @@ app.post('/chat', async (req, res) => {
 
         const modelCandidates = [
             imageBase64 ? visionModel : process.env.GROQ_MODEL,
-            imageBase64 ? "llama-3.2-90b-vision-preview" : "llama-3.3-70b-versatile",
-            imageBase64 ? null : "llama-3.1-8b-instant"
+            imageBase64 ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile",
+            imageBase64
+                ? "meta-llama/llama-4-maverick-17b-128e-instruct"
+                : "openai/gpt-oss-20b"
         ].filter((model, index, models) => model && models.indexOf(model) === index);
 
         let data = null;
@@ -105,10 +107,15 @@ app.post('/chat', async (req, res) => {
 
                 if (!response.ok) {
                     lastProviderError = data?.error?.message || `El proveedor respondió con estado ${response.status}.`;
-                    if (response.status !== 404) {
+                    const modelUnavailable = response.status === 404 ||
+                        (response.status === 400 &&
+                            /model.*(?:does not exist|not found|not available|do not have access|not have access|no access|decommissioned)/i
+                                .test(lastProviderError));
+                    if (!modelUnavailable) {
                         console.error("Groq error:", response.status, lastProviderError);
                         break;
                     }
+                    console.warn("Groq model unavailable; trying fallback:", model);
                     continue;
                 }
 
