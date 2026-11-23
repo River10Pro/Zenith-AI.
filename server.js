@@ -15,7 +15,7 @@ app.get('/health', (_req, res) => {
 
 app.post('/chat', async (req, res) => {
     const groqKey = process.env.GROQ_API_KEY;
-    const visionModel = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+    const visionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
     if (!groqKey) {
         return res.status(503).json({ error: "El servicio de IA no está configurado." });
@@ -77,9 +77,9 @@ app.post('/chat', async (req, res) => {
 
         const modelCandidates = [
             imageBase64 ? visionModel : process.env.GROQ_MODEL,
-            imageBase64 ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile",
+            imageBase64 ? "qwen/qwen3.8-27b" : "llama-3.3-70b-versatile",
             imageBase64
-                ? "meta-llama/llama-4-maverick-17b-128e-instruct"
+                ? "meta-models/muse-spark-open"
                 : "openai/gpt-oss-20b"
         ].filter((model, index, models) => model && models.indexOf(model) === index);
 
