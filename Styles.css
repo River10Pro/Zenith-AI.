@@ -1497,3 +1497,317 @@ body.light-theme .quick-buttons button { color: var(--text); }
         transition-duration: .01ms !important;
     }
 }
+
+.brand-mark {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.28);
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.42), transparent 28%),
+        linear-gradient(140deg, #8978ff, #4e8cf1 58%, #31c6d9);
+    box-shadow: 0 8px 26px rgba(106,122,244,.32), inset 0 1px 5px rgba(255,255,255,.2);
+}
+
+.brand-mark::after {
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 9px;
+    content: "";
+    pointer-events: none;
+}
+
+.topbar {
+    border-bottom-color: rgba(165,180,255,.09);
+    box-shadow: 0 8px 28px rgba(0,0,0,.08);
+}
+
+.chat-stage {
+    position: relative;
+    isolation: isolate;
+}
+
+.chat-stage::before,
+.chat-stage::after {
+    position: absolute;
+    z-index: -1;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    content: "";
+    filter: blur(90px);
+    opacity: .14;
+    pointer-events: none;
+}
+
+.chat-stage::before {
+    top: 8%;
+    left: 7%;
+    background: #7667ff;
+}
+
+.chat-stage::after {
+    right: 5%;
+    bottom: 5%;
+    background: #27c7d7;
+}
+
+.welcome-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(660px, 100%);
+    margin: auto;
+    padding: 26px 8px;
+    animation: welcome-arrive .55s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.welcome-kicker {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    margin-bottom: 17px;
+    padding: 7px 11px;
+    border: 1px solid rgba(168,155,255,.19);
+    border-radius: 999px;
+    background: rgba(128,111,255,.09);
+    color: #c2b9ff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .15em;
+}
+
+.welcome-kicker span {
+    color: #8de8eb;
+    font-size: 14px;
+    text-shadow: 0 0 12px rgba(112,232,230,.58);
+}
+
+.welcome-panel h1 {
+    max-width: 620px;
+    color: #f7f8ff;
+    font-size: clamp(32px, 4.5vw, 48px);
+    font-weight: 760;
+    letter-spacing: -.055em;
+    line-height: 1.08;
+}
+
+.welcome-panel h1 span {
+    background: linear-gradient(100deg, #a899ff 12%, #84cbff 57%, #75e3d3);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.welcome-description {
+    max-width: 490px;
+    margin: 13px 0 22px;
+    color: #a7aec1;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.welcome-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.welcome-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 76px;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    border: 1px solid rgba(168,180,222,.12);
+    border-radius: 17px;
+    background: linear-gradient(135deg, rgba(28,32,49,.78), rgba(20,24,37,.67));
+    color: #f1f3fc;
+    text-align: left;
+    cursor: pointer;
+    transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.welcome-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(148,137,255,.42);
+    background: linear-gradient(135deg, rgba(45,42,76,.8), rgba(24,34,52,.78));
+    box-shadow: 0 12px 30px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.05);
+}
+
+.welcome-card:active {
+    transform: translateY(-1px) scale(.99);
+}
+
+.welcome-card-icon {
+    display: grid;
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 13px;
+    font-size: 19px;
+}
+
+.idea-icon { background: linear-gradient(145deg, rgba(157,122,255,.25), rgba(101,107,237,.11)); color: #c2aaff; }
+.learn-icon { background: linear-gradient(145deg, rgba(72,187,224,.23), rgba(67,119,216,.1)); color: #8de1ee; }
+.write-icon { background: linear-gradient(145deg, rgba(245,132,174,.22), rgba(206,92,155,.1)); color: #ffadd0; }
+.create-icon { background: linear-gradient(145deg, rgba(96,216,185,.2), rgba(57,166,182,.1)); color: #8debd0; }
+
+.welcome-card > span:nth-child(2) {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.welcome-card strong {
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 720;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.welcome-card small {
+    overflow: hidden;
+    color: #9da6bb;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.welcome-card-arrow {
+    margin-left: auto;
+    color: #8790aa;
+    font-size: 15px;
+    opacity: .7;
+    transition: color .2s ease, transform .2s ease;
+}
+
+.welcome-card:hover .welcome-card-arrow {
+    transform: translate(2px,-2px);
+    color: #c2b9ff;
+}
+
+.welcome-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 17px;
+    color: #858da2;
+    font-size: 10px;
+    letter-spacing: .015em;
+}
+
+.welcome-note-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #68d8c0;
+    box-shadow: 0 0 10px rgba(104,216,192,.65);
+}
+
+body.light-theme .welcome-panel h1 { color: #1d2740; }
+body.light-theme .welcome-kicker { border-color: rgba(105,92,196,.16); background: rgba(121,105,230,.08); color: #6358b5; }
+body.light-theme .welcome-description { color: #68748e; }
+body.light-theme .welcome-card { border-color: rgba(91,105,155,.13); background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(246,247,253,.91)); color: #28334c; box-shadow: 0 5px 18px rgba(50,62,104,.04); }
+body.light-theme .welcome-card:hover { border-color: rgba(121,105,230,.34); background: #fff; box-shadow: 0 12px 28px rgba(50,62,104,.1); }
+body.light-theme .welcome-card small,
+body.light-theme .welcome-note { color: #707b94; }
+
+@keyframes welcome-arrive {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 800px) {
+    .welcome-panel { padding: 18px 7px; }
+    .welcome-description { margin-bottom: 18px; }
+    .chat-stage::before,
+    .chat-stage::after { opacity: .1; }
+}
+
+.ai-shell.has-welcome .quick-buttons {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .welcome-panel { padding: 10px 3px; }
+    .welcome-kicker { margin-bottom: 10px; padding: 6px 9px; font-size: 8px; }
+    .welcome-panel h1 { font-size: clamp(29px, 8.5vw, 37px); }
+    .welcome-description { margin: 8px 0 12px; font-size: 11px; line-height: 1.5; }
+    .welcome-grid { gap: 7px; }
+    .welcome-card { min-height: 62px; gap: 8px; padding: 8px; border-radius: 13px; }
+    .welcome-card-icon { flex-basis: 31px; width: 31px; height: 31px; border-radius: 10px; font-size: 16px; }
+    .welcome-card strong { font-size: 11px; }
+    .welcome-card small { font-size: 9px; }
+    .welcome-card-arrow { display: none; }
+    .welcome-note { margin-top: 9px; font-size: 8px; }
+}
+
+#aiBackground {
+    opacity: .46;
+}
+
+@media (max-width: 800px) {
+    .ai-shell.has-welcome .chat-area {
+        margin-top: 0;
+        padding: 8px 12px;
+    }
+
+    .ai-shell.has-welcome .welcome-panel {
+        padding: 8px 6px;
+    }
+
+    .ai-shell.has-welcome .welcome-kicker {
+        margin-bottom: 8px;
+    }
+
+    .ai-shell.has-welcome .welcome-description {
+        margin: 6px 0 10px;
+        font-size: 11px;
+    }
+
+    .ai-shell.has-welcome .welcome-card {
+        min-height: 57px;
+        padding: 8px 10px;
+    }
+
+    .ai-shell.has-welcome .welcome-card-icon {
+        flex-basis: 32px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .ai-shell.has-welcome .welcome-note {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-shell.has-welcome .chat-area {
+        padding: 6px 9px;
+    }
+
+    .ai-shell.has-welcome .welcome-panel {
+        padding: 5px 3px;
+    }
+
+    .ai-shell.has-welcome .welcome-panel h1 {
+        font-size: clamp(28px, 8vw, 34px);
+    }
+
+    .ai-shell.has-welcome .welcome-card {
+        min-height: 54px;
+        gap: 7px;
+        padding: 7px;
+    }
+
+    .ai-shell.has-welcome .welcome-card-icon {
+        flex-basis: 29px;
+        width: 29px;
+        height: 29px;
+    }
+}

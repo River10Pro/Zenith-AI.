@@ -29,7 +29,7 @@
 
 <aside class="zenith-sidebar" id="zenithSidebar">
     <div class="brand">
-        <div class="brand-mark">Z</div>
+        <div class="brand-mark">M</div>
         <div>
             <strong>MelDya</strong>
             <span>IA Personal</span>
@@ -95,6 +95,36 @@
     </section>
 
     <section class="chat-stage">
+        <template id="welcomeTemplate">
+            <section class="welcome-panel" aria-label="Bienvenida a MelDya">
+                <div class="welcome-kicker"><span>✦</span> TU ESPACIO PARA IMAGINAR</div>
+                <h1>Hola, <span id="welcomeName">amigo</span>.<br>¿Qué hacemos hoy?</h1>
+                <p class="welcome-description">Una pregunta puede convertirse en una gran idea. Empecemos por donde tú quieras.</p>
+                <div class="welcome-grid">
+                    <button class="welcome-card" type="button" onclick="sendQuickMessage('Ayúdame a crear una idea original para un proyecto')">
+                        <span class="welcome-card-icon idea-icon">✦</span>
+                        <span><strong>Crear una idea</strong><small>Inspírame y dame opciones</small></span>
+                        <span class="welcome-card-arrow">↗</span>
+                    </button>
+                    <button class="welcome-card" type="button" onclick="sendQuickMessage('Explícame un tema difícil de forma sencilla, con un ejemplo')">
+                        <span class="welcome-card-icon learn-icon">◈</span>
+                        <span><strong>Aprender algo</strong><small>Claro, fácil y paso a paso</small></span>
+                        <span class="welcome-card-arrow">↗</span>
+                    </button>
+                    <button class="welcome-card" type="button" onclick="sendQuickMessage('Ayúdame a escribir un mensaje bonito y natural')">
+                        <span class="welcome-card-icon write-icon">✎</span>
+                        <span><strong>Escribir mejor</strong><small>Hagamos que suene a ti</small></span>
+                        <span class="welcome-card-arrow">↗</span>
+                    </button>
+                    <button class="welcome-card" type="button" onclick="sendQuickMessage('Dame ideas para una imagen creativa y sorprendente')">
+                        <span class="welcome-card-icon create-icon">✧</span>
+                        <span><strong>Imaginar algo</strong><small>Vamos a crear desde cero</small></span>
+                        <span class="welcome-card-arrow">↗</span>
+                    </button>
+                </div>
+                <div class="welcome-note"><span class="welcome-note-dot"></span> Tu curiosidad es el mejor punto de partida.</div>
+            </section>
+        </template>
         <div id="chatBox" class="chat-area"></div>
     </section>
 
@@ -232,6 +262,7 @@ function editarNombre(){
    RESTORE CHAT
 ============================== */
 const saved = localStorage.getItem("chatHistory");
+showWelcomeScreen();
 if (saved) {
     try {
         chatHistory = JSON.parse(saved);
@@ -248,7 +279,6 @@ if (saved) {
 }
 if (chatHistory.length === 0) {
     chatHistory = [];
-    addBotMessage(`¡Hola ${userName}! 👋 ¿En qué te ayudo hoy?`);
 }
 
 /* ==============================
@@ -364,10 +394,26 @@ function setEmotion(type){
     if(mouth) mouth.className=`companion-mouth mood-${type}`;
 }
 
+function showWelcomeScreen(){
+    const box=document.getElementById("chatBox");
+    const template=document.getElementById("welcomeTemplate");
+    if(!box || !template) return;
+    box.replaceChildren(template.content.cloneNode(true));
+    document.querySelector(".ai-shell")?.classList.add("has-welcome");
+    const name=box.querySelector("#welcomeName");
+    if(name) name.textContent=userName || "amigo";
+}
+
+function hideWelcomeScreen(){
+    document.querySelector("#chatBox .welcome-panel")?.remove();
+    document.querySelector(".ai-shell")?.classList.remove("has-welcome");
+}
+
 /* ==============================
    CHAT FUNCTIONS
 ============================== */
 function addUserMessage(text, imageUrl=null){
+    hideWelcomeScreen();
     let box = document.getElementById("chatBox");
     let msg = document.createElement("div");
     msg.classList.add("message","user","user-message");
@@ -403,6 +449,7 @@ function addUserMessage(text, imageUrl=null){
 }
 
 function addBotMessage(text, withCopy=false, imageUrl=null) {
+    hideWelcomeScreen();
     let box = document.getElementById("chatBox");
     let wrapper = document.createElement("div");
     wrapper.classList.add("bot-message");
@@ -659,7 +706,8 @@ function limpiarChat(){
     document.getElementById("chatBox").innerHTML="";
     chatHistory=[];
     clearSelectedImage();
-    addBotMessage(`¡Empezamos de nuevo, ${userName}! ¿Qué quieres explorar?`);
+    showWelcomeScreen();
+    showThought(`¡Empezamos de nuevo, ${userName}! ¿Qué quieres explorar?`);
     setSidebar(false);
     document.getElementById("messageInput").focus();
 }
