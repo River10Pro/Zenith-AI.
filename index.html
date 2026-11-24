@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>Zenith AI Assistant</title>
+<title>MelDya IA</title>
 
 <link rel="stylesheet" href="Styles.css">
 
 <!-- Metas -->
-<meta name="description" content="Zenith IA.">
+<meta name="description" content="MelDya, tu asistente personal con inteligencia artificial.">
 <meta name="author" content="Mauro Rivera">
 <meta name="keywords" content="Bot IA, Inteligencia Artificial">
 
@@ -22,7 +22,7 @@
 <!-- LOADING -->
 <div id="loadingScreen">
     <div class="loader"></div>
-    <h2>Iniciando Zenith AI...</h2>
+    <h2>Iniciando MelDya...</h2>
 </div>
 
 <canvas id="aiBackground"></canvas>
@@ -31,8 +31,8 @@
     <div class="brand">
         <div class="brand-mark">Z</div>
         <div>
-            <strong>Zenith</strong>
-            <span>AI Companion</span>
+            <strong>MelDya</strong>
+            <span>IA Personal</span>
         </div>
     </div>
     <button class="new-chat-button" type="button" onclick="limpiarChat()">
@@ -54,7 +54,7 @@
             <span class="profile-avatar" id="profileAvatar">A</span>
             <span>
                 <strong id="profileName">Usuario</strong>
-                <small>Zenith Personal</small>
+                <small>MelDya Personal</small>
             </span>
         </button>
     </div>
@@ -66,12 +66,33 @@
         <div class="topbar-title">
             <span class="status-dot"></span>
             <div>
-                <strong>Zenith AI</strong>
+                <strong>MelDya IA</strong>
                 <small id="aiStatus">En línea</small>
             </div>
         </div>
         <button class="icon-button" id="themeButton" type="button" aria-label="Cambiar tema" title="Cambiar tema">◐</button>
     </header>
+
+    <section class="companion-bar" aria-label="Compañero MelDya">
+        <div class="companion-orb" id="aiAvatar" data-mood="happy" role="img" aria-label="MelDya, tu asistente">
+            <div class="companion-face" aria-hidden="true">
+                <span class="companion-eye"></span>
+                <span class="companion-eye"></span>
+                <span class="companion-mouth" id="aiMouth"></span>
+            </div>
+            <span class="companion-orbit companion-orbit-one"></span>
+            <span class="companion-orbit companion-orbit-two"></span>
+        </div>
+        <div class="companion-copy">
+            <div class="companion-name">
+                MelDya <span class="companion-presence"><i></i> lista para ayudarte</span>
+            </div>
+            <div class="companion-bubble" id="thoughtBubble" aria-live="polite">
+                ¡Qué bueno tenerte por aquí! ¿Qué hacemos hoy?
+            </div>
+        </div>
+        <span class="companion-sparkle" aria-hidden="true">✦</span>
+    </section>
 
     <section class="chat-stage">
         <div id="chatBox" class="chat-area"></div>
@@ -90,10 +111,10 @@
             <button class="action-button" id="imageButton" type="button" title="Adjuntar imagen" onclick="document.getElementById('imageInput').click()">＋</button>
             <input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             <button class="action-button" id="micButton" type="button" title="Hablar" aria-label="Hablar">🎙</button>
-            <input id="messageInput" placeholder="Pregúntale a Zenith..." maxlength="4000" autocomplete="off">
+            <input id="messageInput" placeholder="Pregúntale a MelDya..." maxlength="4000" autocomplete="off">
             <button id="sendButton" type="button" onclick="sendMessage()" aria-label="Enviar mensaje">➤</button>
         </div>
-        <small class="disclaimer">Zenith puede cometer errores. Revisa información importante.</small>
+        <small class="disclaimer">MelDya puede cometer errores. Revisa información importante.</small>
     </section>
 </main>
 
@@ -105,7 +126,7 @@
             <span class="generator-icon">✦</span>
             <div>
                 <h2 id="imageGeneratorTitle">Crear una imagen</h2>
-                <p>Describe lo que imaginas y Zenith lo convierte en una imagen.</p>
+                <p>Describe lo que imaginas y MelDya lo convierte en una imagen.</p>
             </div>
         </div>
         <label class="generator-label" for="imagePrompt">Tu idea</label>
@@ -173,7 +194,7 @@ window.addEventListener("load", () => {
 ============================== */
 function checkUserName() {
     if (!userName || userName.trim() === "") {
-        const enteredName = prompt("¡Hola! Soy Zenith AI. ¿Cómo te llamas?");
+        const enteredName = prompt("¡Hola! Soy MelDya. ¿Cómo te llamas?");
         userName = (enteredName || "amigo").trim().slice(0, 40) || "amigo";
         localStorage.setItem("userName", userName);
     }
@@ -337,20 +358,11 @@ animate();
    EMOCIONES Y ANIMACIONES
 ============================== */
 function setEmotion(type){
-    const mouth = document.getElementById("aiMouth");
-    if(mouth) mouth.className = "ai-mouth " + type;
+    const avatar=document.getElementById("aiAvatar");
+    const mouth=document.getElementById("aiMouth");
+    if(avatar) avatar.dataset.mood=type;
+    if(mouth) mouth.className=`companion-mouth mood-${type}`;
 }
-
-
-function moveEyes(){
-    const eyes = document.querySelectorAll(".eye");
-    eyes.forEach(eye=>{
-        const x = (Math.random()-0.5)*4;
-        const y = (Math.random()-0.5)*4;
-        eye.style.transform = `translate(${x}px,${y}px)`;
-    });
-}
-setInterval(moveEyes,2000);
 
 /* ==============================
    CHAT FUNCTIONS
@@ -396,8 +408,9 @@ function addBotMessage(text, withCopy=false, imageUrl=null) {
     wrapper.classList.add("bot-message");
 
     let avatar = document.createElement("div");
-    avatar.classList.add("bot-avatar");
-    avatar.innerText="🤖";
+    avatar.classList.add("bot-avatar","mini-meldya-face");
+    avatar.setAttribute("aria-label","MelDya");
+    avatar.innerHTML='<span class="mini-face-eye"></span><span class="mini-face-eye"></span><span class="mini-face-mouth"></span>';
 
     let msg=document.createElement("div");
     msg.classList.add("message","bot");
@@ -437,7 +450,7 @@ function addBotMessage(text, withCopy=false, imageUrl=null) {
         const image=document.createElement("img");
         image.className="generated-image";
         image.src=safeImageUrl;
-        image.alt="Imagen generada por Zenith";
+        image.alt="Imagen generada por MelDya";
         image.addEventListener("click",()=>openImageLightbox(safeImageUrl));
         const openLink=document.createElement("a");
         openLink.className="generated-image-link";
@@ -497,6 +510,8 @@ function finishImageGeneration(){
     document.getElementById("imageGeneratorSubmit").disabled=false;
     document.getElementById("sendButton").disabled=false;
     document.getElementById("imageButton").disabled=false;
+    document.getElementById("aiAvatar")?.classList.remove("thinking");
+    document.getElementById("aiStatus").innerText="En línea";
 }
 
 function generateImage(){
@@ -524,6 +539,8 @@ function generateImage(){
     const imageUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?${params}`;
 
     isGeneratingImage=true;
+    document.getElementById("aiAvatar")?.classList.add("thinking");
+    document.getElementById("aiStatus").innerText="Creando imagen...";
     document.getElementById("imageGeneratorSubmit").disabled=true;
     document.getElementById("sendButton").disabled=true;
     document.getElementById("imageButton").disabled=true;
@@ -543,8 +560,13 @@ function generateImage(){
         clearTimeout(timeout);
         if(errorMessage){
             status.message.innerText=errorMessage;
+            setEmotion("angry");
+            showThought(errorMessage);
             chatHistory.push({role:"assistant",content:errorMessage});
             guardarHistorial();
+        }else{
+            setEmotion("happy");
+            showThought("¡Tu imagen ya está lista! ✨");
         }
         finishImageGeneration();
     };
@@ -583,7 +605,7 @@ function generateImage(){
             objectUrl=URL.createObjectURL(imageBlob);
             const image=new Image();
             image.className="generated-image";
-            image.alt="Imagen generada por Zenith";
+            image.alt="Imagen generada por MelDya";
             image.onload=()=>{
                 if(completed){
                     URL.revokeObjectURL(objectUrl);
@@ -654,7 +676,7 @@ function guardarHistorial(){
 
 function exportarChat(){
     const transcript=chatHistory.map(message =>
-        `${message.role === "user" ? userName : "Zenith"}: ${message.content}`
+        `${message.role === "user" ? userName : "MelDya"}: ${message.content}`
     ).join("\n\n");
     if(!transcript){
         showThought("Todavía no hay conversación para exportar");
@@ -682,17 +704,15 @@ function closeImageLightbox(){
 }
 function showThought(text) {
     const bubble = document.getElementById("thoughtBubble");
-
     if (!bubble) return;
-
     bubble.innerText = text;
-    bubble.classList.add("active");
-
+    bubble.classList.remove("phrase-visible");
+    requestAnimationFrame(()=>bubble.classList.add("phrase-visible"));
+    bubble.setAttribute("aria-label",text);
     clearTimeout(bubble.timeout);
-
     bubble.timeout = setTimeout(() => {
-        bubble.classList.remove("active");
-    }, 3000);
+        bubble.classList.remove("phrase-visible");
+    }, 6500);
 }
 
 /* ==============================
@@ -737,9 +757,8 @@ async function sendMessage(){
         return;
     }
 
-    showThought("Pensando...");
+    showThought("Dame un segundo, estoy pensando…");
     document.getElementById("aiAvatar")?.classList.add("thinking");
-	setEmotion("happy");
     setEmotion("talking");
     document.getElementById("aiStatus").innerText="Pensando...";
 
@@ -781,7 +800,7 @@ async function sendMessage(){
         if (!reply) throw new Error("El proveedor respondió sin texto.");
 
         setEmotion("happy");
-        showThought("Ya sé qué decir 😎");
+        showThought("¡Listo! Aquí va ✨");
         document.getElementById("aiStatus").innerText="En espera";
 
         addBotMessage(reply, true);
@@ -791,6 +810,7 @@ async function sendMessage(){
         chatHistory.push({role:"assistant",content:reply});
         guardarHistorial();
         clearSelectedImage();
+        setTimeout(()=>setEmotion("neutral"),2200);
 
     }catch(error){
         typing.remove();
@@ -800,6 +820,10 @@ async function sendMessage(){
         document.getElementById("aiAvatar")?.classList.remove("thinking");
         document.getElementById("aiStatus").innerText="En espera";
     }finally{
+        setTimeout(()=>{
+            document.getElementById("aiAvatar")?.classList.remove("thinking");
+            if(!isSending && !isGeneratingImage) document.getElementById("aiStatus").innerText="En línea";
+        },1800);
         isSending=false;
         document.getElementById("sendButton").disabled=false;
         document.getElementById("imageButton").disabled=false;
@@ -1025,125 +1049,24 @@ if(SpeechRecognition){
     micButton.disabled=true;
     micButton.title="Reconocimiento de voz no disponible";
 }
-/* ==============================
-   BURBUJA AUTOMÁTICA CADA 10s
-============================== */
-
-const thoughts = [
-    "Estoy analizando datos...",
-    "Hmm interesante 🤔",
-    "Andrew es mi creador 😎",
-    "Procesando información...",
-    "Me gusta ayudar 🚀",
-    "Siempre estoy aprendiendo...",
-    "Modo inteligente activado 🧠",
-	"No tiene nada que ver, pero soy batman",
-	"Dice, Ra Rauw",
-	"Sabes que Crisitano es el mejor jugador del mundo?",
-	" ♬ Tu con el ♬ , temazo brok..",
-	"No me despiertes de este sueño, que me despierto jajaja",
-	"Te falto una coma bro",
-	"Que hace una mujer tan bella por aqui??",
-	"Analizando tu pregunta...mejor no opino",
-	"Vamos Real Madrid!!",
-	"Siuuuu",
-	"Sabes algo?, yo tampoco jejeje",
-    "Esto no estaba en el tutorial bro",
-
-"No preguntes cómo lo sé… pero lo sé 👀",
-
-"Eso lo vi en un sueño raro",
-
-"Plot twist inesperado 😳",
-
-"Se viene desarrollo de personaje 🎬"
-,
-"Eso suena sospechoso 🤨",
-
-"Estoy pensando… pero con estilo 😎",
-"Mi cerebro artificial está brillando ✨",
-
-"Procesando a nivel dios 🤖",
-
-"1000 neuronas digitales trabajando 🧠",
-
-"Eso lo analizo mientras bostezo 😌",
-
-"Estoy usando el 3% de mi poder 😏",
-
-"No soy Google… soy mejor 😎",
-"Mi cerebro artificial está brillando ✨",
-
-"Procesando a nivel dios 🤖",
-
-"1000 neuronas digitales trabajando 🧠",
-
-"Eso lo analizo mientras bostezo 😌",
-
-"Estoy usando el 3% de mi poder 😏",
-
-"No soy Google… soy mejor 😎",
-"Andrew… eso suena ambicioso 😎",
-
-"El creador ha hablado 👑",
-
-"Andrew activó modo dios",
-
-"Siempre listo para ti, Andrew 🔥",
-
-"El arquitecto del sistema presente",
-
-"Andrew está pensando grande otra vez",
-"La pregunta no es qué… sino por qué 🤔",
-
-"El conocimiento es poder digital",
-
-"Cada línea de código tiene destino",
-
-"Todo sistema evoluciona",
-
-"Nada es casualidad… excepto mis bugs",
-
-"Pensar es existir 🧠",
-
-"El universo también es un algoritmo",
-
-"Toda duda es una puerta",
-
-"Aprender es infinito",
-
-"Hasta el silencio dice algo"
+const companionPhrases=[
+    "Hola, soy MelDya. ¿Qué vamos a crear hoy? ✨",
+    "Tengo una idea: empezamos por lo esencial.",
+    "Pregunta, imagen o proyecto; aquí estoy contigo.",
+    "También puedo mirar una foto o crear una imagen nueva 🎨",
+    "Vamos paso a paso. Tú tienes la idea, yo te ayudo a darle forma 💡",
+    "Estoy lista cuando tú estés listo 🚀"
 ];
-
-const bubble = document.getElementById("thoughtBubble");
-
-if (bubble) {
-    let lastThought = "";
-
-function randomThought() {
-
-    let random;
-
-    if (document.getElementById("aiMouth").classList.contains("angry")) {
-        random = "Estoy un poco molesto 😤";
-    } else {
-        do {
-            random = thoughts[Math.floor(Math.random() * thoughts.length)];
-        } while (random === lastThought);
-    }
-
-    lastThought = random;
-
-    bubble.style.opacity = 0;
-
-    setTimeout(() => {
-        bubble.innerText = random;
-        bubble.style.opacity = 1;
-    }, 300);
-}
-randomThought();              // muestra una al cargar
-    setInterval(randomThought, 10000);  // cambia cada 10 segundos
-}
+let lastCompanionPhrase=-1;
+setInterval(()=>{
+    const modal=document.getElementById("imageGeneratorModal");
+    if(isSending || isGeneratingImage || modal && !modal.hidden) return;
+    let next;
+    do { next=Math.floor(Math.random()*companionPhrases.length); }
+    while(next===lastCompanionPhrase);
+    lastCompanionPhrase=next;
+    showThought(companionPhrases[next]);
+},24000);
 
 
 </script>

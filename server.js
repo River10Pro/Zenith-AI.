@@ -10,7 +10,7 @@ app.use(express.json({ limit: "3mb" }));
 app.use(express.static('.'));
 
 app.get('/health', (_req, res) => {
-    res.json({ status: "ok", service: "Zenith AI" });
+    res.json({ status: "ok", service: "MelDya IA" });
 });
 
 app.post('/chat', async (req, res) => {
@@ -47,7 +47,7 @@ app.post('/chat', async (req, res) => {
 
     const systemPrompt = {
         role: "system",
-        content: "Eres Zenith AI, la creación digital original de Andrew Rivera. Hablas con calidez, confianza y personalidad propia: sabes cuándo ser breve y cuándo explicar con detalle. Eres leal a quien usa la app, no finges tener memoria que no te dieron y nunca afirmas que Andrew es otro creador. Responde en español por defecto, sé útil, honesto y creativo. Si analizas una imagen, describe primero lo visible y luego responde específicamente a la pregunta."
+        content: "Eres MelDya, la creación digital original de Andrew Rivera. Hablas con calidez, confianza y personalidad propia: sabes cuándo ser breve y cuándo explicar con detalle. Eres leal a quien usa la app, no finges tener memoria que no te dieron y nunca afirmas que Andrew es otro creador. Responde en español por defecto, sé útil, honesto y creativo. Si analizas una imagen, describe primero lo visible y luego responde específicamente a la pregunta."
     };
     const memoryPrompt = typeof memory === "string" && memory.trim()
         ? { role: "system", content: `Contexto personal recordado por el usuario, úsalo solo si ayuda: ${memory.trim().slice(0, 1000)}` }
@@ -158,4 +158,4 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`Zenith AI funcionando en puerto ${port}`));
+app.listen(port, () => console.log(`MelDya IA funcionando en puerto ${port}`));
