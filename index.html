@@ -225,9 +225,10 @@ window.addEventListener("load", () => {
 function checkUserName() {
     if (!userName || userName.trim() === "") {
         const enteredName = prompt("¡Hola! Soy MelDya. ¿Cómo te llamas?");
-        userName = (enteredName || "amigo").trim().slice(0, 40) || "amigo";
-        localStorage.setItem("userName", userName);
+        userName = enteredName || "";
     }
+    userName = userName.trim().slice(0, 40) || "amigo";
+    localStorage.setItem("userName", userName);
     const profileName=document.getElementById("profileName");
     const profileAvatar=document.getElementById("profileAvatar");
     if(profileName) profileName.innerText=userName;

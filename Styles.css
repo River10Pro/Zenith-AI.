@@ -1811,3 +1811,27 @@ body.light-theme .welcome-note { color: #707b94; }
         height: 29px;
     }
 }
+
+.ai-shell.has-welcome .chat-stage {
+    align-items: flex-start;
+}
+
+.ai-shell.has-welcome .chat-area {
+    height: auto;
+    flex: 0 1 auto;
+    margin-top: 0;
+    padding-top: 10px;
+    padding-bottom: 12px;
+    overflow-y: auto;
+}
+
+.ai-shell.has-welcome .welcome-panel {
+    margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+    .ai-shell.has-welcome .chat-area {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+}
