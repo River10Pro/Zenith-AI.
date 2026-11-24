@@ -131,7 +131,7 @@
                 </select>
             </label>
         </div>
-        <p class="generator-disclaimer">Usa Pollinations (Flux). La descripción se envía a ese servicio; el acceso sin clave puede tener límites o cambiar.</p>
+        <p class="generator-disclaimer">Usa Pollinations (Flux). El acceso gratuito puede limitarse a una imagen cada 45 segundos por IP; la descripción se envía a ese servicio.</p>
         <div class="generator-actions">
             <button class="generator-cancel" id="imageGeneratorCancel" type="button">Cancelar</button>
             <button class="generator-submit" id="imageGeneratorSubmit" type="button">✦ Generar imagen</button>
@@ -419,11 +419,17 @@ function addBotMessage(text, withCopy=false, imageUrl=null) {
 
     let safeImageUrl=null;
     if (imageUrl) {
-        try {
-            const parsedImageUrl=new URL(imageUrl);
-            if(parsedImageUrl.origin==="https://gen.pollinations.ai") safeImageUrl=parsedImageUrl.href;
-        } catch (error) {
-            console.warn("Se omitió una URL de imagen no válida.");
+        if(/^data:image\/(?:jpeg|png|webp);base64,/i.test(imageUrl)){
+            safeImageUrl=imageUrl;
+        }else{
+            try {
+                const parsedImageUrl=new URL(imageUrl);
+                if(["https://image.pollinations.ai","https://gen.pollinations.ai"].includes(parsedImageUrl.origin)){
+                    safeImageUrl=parsedImageUrl.href;
+                }
+            } catch (error) {
+                console.warn("Se omitió una URL de imagen no válida.");
+            }
         }
     }
 
@@ -509,12 +515,13 @@ function generateImage(){
     const imagePrompt=style ? `${prompt}, ${style}` : prompt;
     const [width,height]=document.getElementById("imageAspect").value.split("x");
     const params=new URLSearchParams({
-        model:"black-forest-labs/flux.1-schnell",
+        model:"flux",
         width,
         height,
-        seed:String(Math.floor(Math.random()*2147483647))
+        seed:String(Math.floor(Math.random()*2147483647)),
+        nologo:"true"
     });
-    const imageUrl=`https://gen.pollinations.ai/image/${encodeURIComponent(imagePrompt)}?${params}`;
+    const imageUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?${params}`;
 
     isGeneratingImage=true;
     document.getElementById("imageGeneratorSubmit").disabled=true;
@@ -541,36 +548,88 @@ function generateImage(){
         }
         finishImageGeneration();
     };
-    const timeout=setTimeout(
-        ()=>finish("La generación tardó demasiado. Inténtalo de nuevo más tarde."),
-        90000
-    );
-    const image=new Image();
-    image.onload=()=>{
-        image.className="generated-image";
-        image.alt="Imagen generada por Zenith";
-        image.addEventListener("click",()=>openImageLightbox(imageUrl));
-        const caption=document.createElement("div");
-        caption.innerText="Aquí está tu imagen:";
-        const openLink=document.createElement("a");
-        openLink.className="generated-image-link";
-        openLink.href=imageUrl;
-        openLink.target="_blank";
-        openLink.rel="noopener noreferrer";
-        openLink.innerText="Abrir imagen para guardarla";
-        status.message.replaceChildren(caption,image,openLink);
-        chatHistory.push({
-            role:"assistant",
-            content:`Imagen generada: ${prompt}`,
-            imageUrl
-        });
-        guardarHistorial();
-        finish();
-    };
-    image.onerror=()=>{
-        finish("No se pudo generar la imagen. El servicio puede estar limitado temporalmente; inténtalo más tarde.");
-    };
-    image.src=imageUrl;
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>{
+        controller.abort();
+        finish("La generación tardó demasiado. Inténtalo de nuevo más tarde.");
+    },90000);
+
+    (async()=>{
+        let objectUrl=null;
+        try {
+            const response=await fetch(imageUrl,{mode:"cors",signal:controller.signal});
+            if(!response.ok){
+                let providerError=null;
+                try { providerError=await response.json(); } catch {}
+                const errorCode=providerError?.error?.code;
+                const providerMessage=providerError?.error?.message || "";
+                const retryAfter=Number(response.headers.get("Retry-After")) ||
+                    Number(/retry after\s+(\d+)\s*s/i.exec(providerMessage)?.[1]);
+                if(errorCode==="FREE_LIMIT" || response.status===429 || response.status===402){
+                    throw new Error(`El generador gratuito permite una imagen cada 45 segundos por IP. ${retryAfter ? `Espera ${retryAfter} segundos` : "Espera un momento"} y vuelve a intentar.`);
+                }
+                if(response.status===401){
+                    throw new Error("Pollinations requiere una clave para esta solicitud. Intenta de nuevo más tarde.");
+                }
+                throw new Error(providerMessage || `El generador respondió con error ${response.status}.`);
+            }
+
+            const imageBlob=await response.blob();
+            if(!imageBlob.type.startsWith("image/")){
+                throw new Error("El generador no devolvió un archivo de imagen válido.");
+            }
+            if(completed) return;
+
+            objectUrl=URL.createObjectURL(imageBlob);
+            const image=new Image();
+            image.className="generated-image";
+            image.alt="Imagen generada por Zenith";
+            image.onload=()=>{
+                if(completed){
+                    URL.revokeObjectURL(objectUrl);
+                    return;
+                }
+                const thumbnailCanvas=document.createElement("canvas");
+                const thumbnailScale=Math.min(1,360/Math.max(image.naturalWidth,image.naturalHeight));
+                thumbnailCanvas.width=Math.max(1,Math.round(image.naturalWidth*thumbnailScale));
+                thumbnailCanvas.height=Math.max(1,Math.round(image.naturalHeight*thumbnailScale));
+                thumbnailCanvas.getContext("2d").drawImage(
+                    image,0,0,thumbnailCanvas.width,thumbnailCanvas.height
+                );
+                const imagePreview=thumbnailCanvas.toDataURL("image/jpeg",0.58);
+                image.addEventListener("click",()=>openImageLightbox(objectUrl));
+                const caption=document.createElement("div");
+                caption.innerText="Aquí está tu imagen:";
+                const downloadLink=document.createElement("a");
+                downloadLink.className="generated-image-link";
+                downloadLink.href=objectUrl;
+                downloadLink.download="zenith-imagen.jpg";
+                downloadLink.innerText="Descargar imagen";
+                status.message.replaceChildren(caption,image,downloadLink);
+                chatHistory.push({
+                    role:"assistant",
+                    content:`Imagen generada: ${prompt}`,
+                    imageUrl:imagePreview
+                });
+                guardarHistorial();
+                finish();
+            };
+            image.onerror=()=>{
+                if(objectUrl) URL.revokeObjectURL(objectUrl);
+                finish("El archivo recibido no se pudo abrir como imagen. Inténtalo de nuevo.");
+            };
+            image.src=objectUrl;
+        } catch(error) {
+            if(objectUrl) URL.revokeObjectURL(objectUrl);
+            if(completed) return;
+            const message=error.name==="AbortError"
+                ? "La generación tardó demasiado. Inténtalo de nuevo más tarde."
+                : error instanceof TypeError
+                    ? "No pude conectar con el generador. Revisa tu conexión e inténtalo de nuevo."
+                    : error.message || "No se pudo generar la imagen. Inténtalo de nuevo.";
+            finish(message);
+        }
+    })();
 }
 
 function limpiarChat(){
