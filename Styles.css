@@ -1784,6 +1784,38 @@ body.light-theme .welcome-note { color: #707b94; }
     .ai-shell.has-welcome .welcome-note {
         display: none;
     }
+
+    .ai-shell {
+        width: 100%;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr);
+        overflow: hidden;
+    }
+
+    .chat-stage {
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .chat-area {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .bot-message {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .message {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .user-message {
+        max-width: 82%;
+    }
 }
 
 @media (max-width: 480px) {
