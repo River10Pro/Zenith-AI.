@@ -13,6 +13,73 @@ app.get('/health', (_req, res) => {
     res.json({ status: "ok", service: "MelDya IA" });
 });
 
+app.post('/transcribe', express.raw({ type: "audio/*", limit: "15mb" }), async (req, res) => {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
+        return res.status(503).json({ error: "El servicio de audio no está configurado." });
+    }
+
+    const mimeType = req.get("content-type")?.split(";")[0].trim().toLowerCase();
+    const audioFormats = {
+        "audio/webm": "webm",
+        "audio/ogg": "ogg",
+        "audio/mp4": "m4a",
+        "audio/mpeg": "mp3",
+        "audio/mp3": "mp3",
+        "audio/wav": "wav",
+        "audio/x-wav": "wav",
+        "audio/flac": "flac"
+    };
+    const extension = audioFormats[mimeType];
+
+    if (!extension) {
+        return res.status(415).json({ error: "Formato de audio no compatible." });
+    }
+
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+        return res.status(400).json({ error: "No se recibió audio." });
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append("model", process.env.GROQ_TRANSCRIPTION_MODEL || "whisper-large-v3-turbo");
+        formData.append(
+            "file",
+            new Blob([req.body], { type: mimeType }),
+            `meldya-audio.${extension}`
+        );
+
+        const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${groqKey}` },
+            body: formData,
+            signal: AbortSignal.timeout(60000)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            const providerError = data?.error?.message || `El proveedor respondió con estado ${response.status}.`;
+            console.error("Groq transcription error:", response.status, providerError);
+            return res.status(502).json({ error: "No se pudo transcribir el audio. Inténtalo de nuevo." });
+        }
+
+        const text = typeof data?.text === "string" ? data.text.trim().slice(0, 4000) : "";
+        if (!text) {
+            return res.status(502).json({ error: "No se detectó voz clara en el audio." });
+        }
+
+        res.json({ text });
+    } catch (error) {
+        console.error("Audio transcription error:", error.name === "TimeoutError" ? "timeout" : error.message);
+        const timedOut = error.name === "TimeoutError";
+        res.status(timedOut ? 504 : 502).json({
+            error: timedOut
+                ? "La transcripción tardó demasiado. Inténtalo de nuevo."
+                : "No se pudo procesar el audio. Inténtalo de nuevo."
+        });
+    }
+});
+
 app.post('/chat', async (req, res) => {
     const groqKey = process.env.GROQ_API_KEY;
     const visionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
@@ -156,6 +223,16 @@ app.post('/chat', async (req, res) => {
         console.error("Chat error:", error.name === "TimeoutError" ? "timeout" : error.message);
         res.status(504).json({ error: "La solicitud tardó demasiado. Inténtalo de nuevo." });
     }
+});
+
+app.use((error, req, res, next) => {
+    if (req.path === "/transcribe" && error.type === "entity.too.large") {
+        return res.status(413).json({ error: "El audio no puede superar 15 MB." });
+    }
+    if (req.path === "/transcribe" && error.type === "encoding.unsupported") {
+        return res.status(415).json({ error: "La codificación del audio no es compatible." });
+    }
+    next(error);
 });
 
 app.listen(port, () => console.log(`MelDya IA funcionando en puerto ${port}`));
